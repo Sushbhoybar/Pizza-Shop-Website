@@ -1,0 +1,40 @@
+Received Data: Array
+(
+    [cart] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 3
+                    [name] => Pepperoni 
+                    [price] => 23.2
+                    [quantity] => 3
+                )
+
+        )
+
+    [address] => sggs 
+    [paymentMethod] => creditCard
+)
+
+Raw Payment Method: creditCard
+Invalid Payment Method Detected: creditCard
+Received Data: Array
+(
+    [cart] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 3
+                    [name] => Pepperoni 
+                    [price] => 23.2
+                    [quantity] => 1
+                )
+
+        )
+
+    [address] => sggs
+    [paymentMethod] => cod
+)
+
+Raw Payment Method: cod
+Invalid Payment Method Detected: cod

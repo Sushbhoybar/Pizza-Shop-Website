@@ -1,0 +1,132 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    header("Location: login.html");
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pizza Menu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("php/get_user_profile.php")
+                .then(response => response.json())
+                .then(user => {
+                    let userMenu = document.getElementById("user-menu");
+                    if (user.error) {
+                        userMenu.innerHTML = `
+                            <a class="btn btn-success" href="login.html">Login</a>
+                        `;
+                    } else {
+                        userMenu.innerHTML = `
+                            <a class="btn btn-light me-2" href="index.html">Home</a>
+                            <a class="btn btn-light me-2" href="profile.html">${user.full_name}</a>
+                            <button class="btn btn-warning" onclick="logout()">Logout</button>
+                        `;
+                    }
+                });
+
+            fetch("php/get_pizzas.php")
+                .then(response => response.json())
+                .then(data => {
+                    let menuContainer = document.getElementById("menu-container");
+                    menuContainer.innerHTML = "";
+
+                    let menuHTML = `<div class="row">`;
+                    Object.values(data).flat().forEach(pizza => {
+                        menuHTML += `
+                            <div class="col-md-4 mb-4">
+                                <div class="card">
+                                    <img src="${pizza.image}" class="card-img-top" alt="${pizza.name}">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">${pizza.name}</h5>
+                                        <p class="card-text">$${pizza.price}</p>
+                                        <p class="card-text">Toppings: ${pizza.toppings}</p>
+                                        <button class="btn btn-danger" onclick="addToCart(${pizza.id}, '${pizza.name}', ${pizza.price})">Add to Cart</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    menuHTML += `</div>`;
+                    menuContainer.innerHTML = menuHTML;
+                })
+                .catch(error => console.error("Error fetching pizzas:", error));
+        });
+
+        function addToCart(id, name, price) {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            let pizza = cart.find(item => item.id === id);
+
+            if (pizza) {
+                pizza.quantity += 1;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+
+            localStorage.setItem("cart", JSON.stringify(cart));
+            alert("Pizza added to cart!");
+        }
+
+        function logout() {
+            fetch("php/logout.php").then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
+        }
+    </script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">🍕 Pizza Shop</a>
+        <div id="user-menu"></div>
+    </div>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("php/get_user_profile.php")
+        .then(response => response.json())
+        .then(user => {
+            let userMenu = document.getElementById("user-menu");
+            if (user.error) {
+                userMenu.innerHTML = '<a class="btn btn-success" href="login.html">Login</a>';
+            } else {
+                userMenu.innerHTML = `
+                    <a class="btn btn-light me-2" href="menu.html">Menu</a>
+                    <a class="btn btn-light me-2" href="cart.html">Cart</a>
+                    <a class="btn btn-light me-2" href="customer_orders.html">My Orders</a>
+                    <a class="btn btn-light me-2" href="profile.html">${user.full_name}</a>
+                    <button class="btn btn-warning" onclick="logout()">Logout</button>
+                `;
+            }
+        });
+});
+
+function logout() {
+    fetch("php/logout.php").then(() => {
+        window.location.href = "login.html";
+    });
+}
+</script>
+
+
+<div class="container mt-5">
+    <h2 class="text-center">Pizza Menu</h2>
+    <div id="menu-container" class="row"></div>
+</div>
+
+<footer class="text-center mt-5 bg-dark text-light py-3">
+    <p>© 2024 Pizza Shop. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

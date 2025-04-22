@@ -1,0 +1,84 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    header("Location: login.html");
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Home - Pizza Shop</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("php/get_user_profile.php?t=" + new Date().getTime())  // Prevent caching
+            .then(response => response.json())
+            .then(user => {
+                if (user.error) {
+                    window.location.href = "login.html";
+                } else if (user.role === "admin") {
+                    window.location.href = "admin_index.html";  // Redirect admins to admin panel
+                } else {
+                    document.getElementById("user-menu").innerHTML = `
+                        <a href="profile.html" class="btn btn-light me-2">${user.full_name}</a>
+                        <a href="cart.html" class="btn btn-warning me-2">🛒 Cart</a>
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    `;
+                }
+            });
+    });
+    function logout() {
+        fetch("php/logout.php").then(() => {
+            window.location.href = "login.html";
+        });
+    }
+    </script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">🍕 Pizza Shop</a>
+        <div id="user-menu"></div>
+    </div>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("php/get_user_profile.php")
+        .then(response => response.json())
+        .then(user => {
+            let userMenu = document.getElementById("user-menu");
+            if (user.error) {
+                userMenu.innerHTML = '<a class="btn btn-success" href="login.html">Login</a>';
+            } else {
+                userMenu.innerHTML = `
+                    <a class="btn btn-light me-2" href="menu.html">Menu</a>
+                    <a class="btn btn-light me-2" href="cart.html">Cart</a>
+                    <a class="btn btn-light me-2" href="customer_orders.html">My Orders</a>
+                    <a class="btn btn-light me-2" href="profile.html">${user.full_name}</a>
+                    <button class="btn btn-warning" onclick="logout()">Logout</button>
+                `;
+            }
+        });
+});
+
+function logout() {
+    fetch("php/logout.php").then(() => {
+        window.location.href = "login.html";
+    });
+}
+</script>
+
+
+<div class="container text-center mt-5">
+    <h1>Welcome to Pizza Shop</h1>
+    <p>Your favorite pizza, delivered fresh and hot!</p>
+    <a href="menu.html" class="btn btn-primary">Order Now</a>
+</div>
+
+</body>
+</html>

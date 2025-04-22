@@ -1,0 +1,140 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header("Location: login.html");
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Orders - Pizza Shop</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("php/get_user_profile.php")
+                .then(response => response.json())
+                .then(user => {
+                    let adminMenu = document.getElementById("admin-menu");
+                    if (user.error || user.role !== "admin") {
+                        window.location.href = "login.html";
+                    } else {
+                        adminMenu.innerHTML = `
+                            <a class="btn btn-light me-2" href="admin_index.html">Admin Home</a>
+                            <a class="btn btn-light me-2" href="profile.html">${user.full_name}</a>
+                            <button class="btn btn-warning" onclick="logout()">Logout</button>
+                        `;
+                    }
+                });
+
+            fetchOrders();
+        });
+
+        function fetchOrders() {
+            fetch("php/admin_orders.php")
+                .then(response => response.json())
+                .then(data => {
+                    let ordersTable = document.getElementById("orders-table");
+                    ordersTable.innerHTML = data.orders.map(order => `
+                        <tr id="order-${order.id}">
+                            <td>${order.id}</td>
+                            <td>${order.user_email}</td>
+                            <td>${order.pizza_name}</td>
+                            <td>${order.quantity}</td>
+                            <td>$${order.total_price}</td>
+                            <td>${order.address}</td>
+                            <td>${order.payment_method || 'N/A'}</td>
+                            <td>
+                                <select class="form-select" onchange="updateStatus(${order.id}, this.value)">
+                                    <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Preparing" ${order.status === 'Preparing' ? 'selected' : ''}>Preparing</option>
+                                    <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                ${order.status === "Cancelled" ? 
+                                    '<span class="text-muted">Cancelled Order</span>' : 
+                                    `<div class="d-flex justify-content-center gap-2">
+                                        <button class="btn btn-danger btn-sm w-100" onclick="rejectOrder(${order.id}, '${order.user_email}')">Reject</button>
+                                        <button class="btn btn-success btn-sm w-100" onclick="updateStatus(${order.id}, 'Preparing')">Accept</button>
+                                     </div>`}
+                            </td>
+                        </tr>
+                    `).join("");
+                });
+        }
+
+        function updateStatus(orderId, newStatus) {
+            fetch("php/update_order_status.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ order_id: orderId, status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchOrders();
+            });
+        }
+
+        function rejectOrder(orderId, userEmail) {
+            if (confirm("Are you sure you want to reject this order?")) {
+                fetch("php/reject_order.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_id: orderId, user_email: userEmail })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchOrders();
+                });
+            }
+        }
+
+        function logout() {
+            fetch("php/logout.php").then(() => {
+                window.location.href = "login.html";
+            });
+        }
+    </script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <div class="container">
+        <a class="navbar-brand" href="#">Admin Panel</a>
+        <div id="admin-menu"></div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h2 class="text-center">Order Management</h2>
+
+    <table class="table table-bordered mt-4">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>User Email</th>
+                <th>Pizza Name</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+                <th>Address</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="orders-table"></tbody>
+    </table>
+</div>
+
+<footer class="text-center mt-5 bg-dark text-light py-3">
+    <p>© 2024 Pizza Shop Admin. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
