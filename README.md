@@ -1,5 +1,5 @@
 # 🍕 Pizza Shop Management System 
-{http://mypizza-shop.byethost8.com}
+{(http://mypizza-shop.byethost8.com/login.html)}
 
 A full-featured Pizza Shop Management System built using **HTML**, **CSS**, **JavaScript**, **Bootstrap**, **PHP**, and **MySQL**. This project supports both **Customer** and **Admin** roles with separate dashboards, dynamic pizza management, cart system, fake payment integration, and real-time order tracking.
 
